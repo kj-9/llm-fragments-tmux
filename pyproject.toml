@@ -1,0 +1,28 @@
+[project]
+name = "llm-fragments-tmux"
+version = "0.1"
+description = "llm plugins for loading tmux info"
+readme = "README.md"
+authors = [{name = "kj-9"}]
+license = "Apache-2.0"
+classifiers = []
+requires-python = ">=3.9"
+dependencies = [
+    "llm"
+]
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project.urls]
+Homepage = "https://github.com/kj-9/llm-fragments-tmux"
+Changelog = "https://github.com/kj-9/llm-fragments-tmux/releases"
+Issues = "https://github.com/kj-9/llm-fragments-tmux/issues"
+CI = "https://github.com/kj-9/llm-fragments-tmux/actions"
+
+[project.entry-points.llm]
+fragments_tmux = "llm_fragments_tmux"
+
+[project.optional-dependencies]
+test = ["pytest"]
