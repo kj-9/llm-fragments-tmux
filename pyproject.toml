@@ -25,4 +25,4 @@ CI = "https://github.com/kj-9/llm-fragments-tmux/actions"
 fragments_tmux = "llm_fragments_tmux"
 
 [project.optional-dependencies]
-test = ["pytest"]
+test = ["pytest", "pytest-xdist"]
