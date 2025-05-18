@@ -14,6 +14,25 @@ Install this plugin in the same environment as [LLM](https://llm.datasette.io/).
 llm install llm-fragments-tmux
 ```
 
+## Example
+
+Here's a step-by-step example of how you might use this plugin in practice:
+
+1. **Open tmux**
+  ```bash
+   tmux
+   ```
+2. **Run a command in your tmux pane**
+   ```bash
+   echo "Hello, world! This is a test."
+   ```
+3. **Use LLM with the tmux fragment to explain what happened**
+   ```bash
+   llm -f tmux: "Explain what happened in this terminal session."
+   ```
+   This will capture the output from your current tmux pane and send it to LLM for explanation.
+
+
 ## Usage
 
 This plugin provides a tmux fragment for use with LLM's `-f`/`--fragment` option.
@@ -32,6 +51,7 @@ llm -f tmux:1,2:20 "Summarize the following terminal output:"
   - `tmux:` — current pane, all lines (default)
 
 You can also use the fragment in other LLM commands that support `-f`/`--fragment`.
+
 
 ## Development
 
