@@ -1,6 +1,6 @@
 [project]
 name = "llm-fragments-tmux"
-version = "0.1.0a0"
+version = "0.1.0a1"
 description = "llm plugins for loading tmux panes"
 readme = "README.md"
 authors = [{name = "kj-9"}]
