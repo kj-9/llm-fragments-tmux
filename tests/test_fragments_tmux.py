@@ -1,49 +1,94 @@
-import os
 import pytest
-import llm_fragments_tmux
+from llm_fragments_tmux import parse_tmux_fragment_argument
+import subprocess
+import time
+from collections import namedtuple
 
-class DummyArgs:
-    def __init__(self, pane_id=None, lines=None):
-        self.pane_id = pane_id
-        self.lines = lines
+@pytest.fixture
+def tmux_session_factory():
+    created_sessions = []
 
-def test_is_tmux_running_false(monkeypatch):
-    monkeypatch.delenv("TMUX", raising=False)
-    assert not llm_fragments_tmux.TmuxFragment._is_tmux_running()
+    def _create(commands):
+        session_name = f"llmfragtest{int(time.time() * 1000)}"
+        create_tmux_session(session_name)
+        for cmd in commands:
+            send_tmux_command(session_name, cmd)
+        created_sessions.append(session_name)
+        return session_name
 
-def test_is_tmux_running_true(monkeypatch):
-    monkeypatch.setenv("TMUX", "/tmp/tmux-1000/default,1234,0")
-    assert llm_fragments_tmux.TmuxFragment._is_tmux_running()
+    yield _create
 
-def test_get_current_pane_id_static_success(monkeypatch):
-    monkeypatch.setenv("TMUX_PANE", "%1")
-    assert llm_fragments_tmux.TmuxFragment._get_current_pane_id_static() == "%1"
+    # Cleanup: kill all created sessions
+    for session_name in created_sessions:
+        kill_tmux_session(session_name)
 
-def test_get_current_pane_id_static_error(monkeypatch):
-    monkeypatch.delenv("TMUX_PANE", raising=False)
-    with pytest.raises(RuntimeError):
-        llm_fragments_tmux.TmuxFragment._get_current_pane_id_static()
 
-def test_capture_pane_static_invalid(monkeypatch):
-    # Simulate tmux not installed or invalid pane
-    def fake_check_output(*a, **k):
-        raise Exception("tmux not found")
-    monkeypatch.setattr(llm_fragments_tmux.subprocess, "check_output", fake_check_output)
-    result = llm_fragments_tmux.TmuxFragment._capture_pane_static("%9999")
-    assert "tmux error" in result
+def run_tmux_command(cmd, check=True, **kwargs):
+    """Helper to run a tmux command via subprocess."""
+    return subprocess.run(cmd, shell=True, check=check, **kwargs)
 
-def test_from_args_not_in_tmux(monkeypatch):
-    monkeypatch.delenv("TMUX", raising=False)
-    args = DummyArgs()
-    frag = llm_fragments_tmux.TmuxFragment.from_args(args)
-    assert "tmux error" in frag.text
+def create_tmux_session(session_name):
+    run_tmux_command(f"tmux new-session -d -s {session_name}")
 
-def test_from_args_capture(monkeypatch):
-    monkeypatch.setenv("TMUX", "dummy")
-    monkeypatch.setenv("TMUX_PANE", "%1")
-    def fake_capture_pane_static(pane_id, lines=None):
-        return f"pane_id={pane_id}, lines={lines}"
-    monkeypatch.setattr(llm_fragments_tmux.TmuxFragment, "_capture_pane_static", staticmethod(fake_capture_pane_static))
-    args = DummyArgs(pane_id="%1", lines=10)
-    frag = llm_fragments_tmux.TmuxFragment.from_args(args)
-    assert frag.text == "pane_id=%1, lines=10"
+def kill_tmux_session(session_name):
+    run_tmux_command(f"tmux kill-session -t {session_name}", check=False)
+
+def send_tmux_command(session_name, command):
+    run_tmux_command(f"tmux send-keys -t {session_name} '{command}' C-m")
+
+# Refactor for test_parse_tmux_fragment_argument_valid
+ParseTmuxFragmentTest = namedtuple(
+    "ParseTmuxFragmentTest",
+    ("argument", "expected"),
+)
+
+@pytest.mark.parametrize(
+    ParseTmuxFragmentTest._fields,
+    [
+        ParseTmuxFragmentTest("", [{"pane": None, "lines": None}]),
+        ParseTmuxFragmentTest("1,2:20,hoge:20,5", [{"pane": "1", "lines": None}, {"pane": "2", "lines": 20}, {"pane": "hoge", "lines": 20}, {"pane": "5", "lines": None}]),
+        ParseTmuxFragmentTest("1:20", [{"pane": "1", "lines": 20}]),
+        ParseTmuxFragmentTest("1,2:", [{"pane": "1", "lines": None}, {"pane": "2", "lines": None}]),
+        ParseTmuxFragmentTest(":20", [{"pane": None, "lines": 20}]),
+        ParseTmuxFragmentTest("1,2", [{"pane": "1", "lines": None}, {"pane": "2", "lines": None}]),
+        ParseTmuxFragmentTest("20", [{"pane": "20", "lines": None}]),
+    ],
+)
+def test_parse_tmux_fragment_argument_valid(argument, expected):
+    assert parse_tmux_fragment_argument(argument) == expected
+
+@pytest.mark.parametrize("argument", [
+    "1,2:abc",
+    ":xyz",
+    "1:!@#",
+])
+def test_parse_tmux_fragment_argument_invalid(argument):
+    with pytest.raises(ValueError):
+        parse_tmux_fragment_argument(argument)
+
+
+# Refactor for test_tmux_fragment_parametrized
+TmuxFragmentParamTest = namedtuple(
+    "TmuxFragmentParamTest",
+    ("cmds", "fragment_arg", "expected_lines"),
+)
+
+@pytest.mark.parametrize(
+    TmuxFragmentParamTest._fields,
+    [
+        TmuxFragmentParamTest(["echo hello world from tmux"], "0", ["echo hello world from tmux"]),
+        TmuxFragmentParamTest(["echo line1", "echo line2", "echo line3"], "2", ["echo line2", "echo line3"]),
+        TmuxFragmentParamTest(["echo lineA", "echo lineB", "echo lineC", "echo lineD"], "3", ["echo lineB", "echo lineC", "echo lineD"]),
+    ],
+)
+def test_tmux_fragment_parametrized(tmux_session_factory, cmds, fragment_arg, expected_lines):
+    session_name = tmux_session_factory(cmds)
+    time.sleep(0.5)
+    result = subprocess.run([
+        "venv/bin/llm", "fragments", "show", f"tmux:{session_name}:{fragment_arg}"
+    ], capture_output=True, text=True)
+
+    assert result.returncode == 0
+    output_lines = [line.strip() for line in result.stdout.splitlines() if line.strip()]
+    assert output_lines == expected_lines
+

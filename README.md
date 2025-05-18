@@ -16,36 +16,22 @@ llm install llm-fragments-tmux
 
 ## Usage
 
-This plugin provides two main commands:
+This plugin provides a tmux fragment for use with LLM's `-f`/`--fragment` option.
 
-### 1. Capture tmux pane content
-
-Print the content of a tmux pane (for testing or use in LLM):
+You can use the content of one or more tmux panes directly in your LLM prompts using positional arguments:
 
 ```bash
-llm fragments_tmux --pane-id <pane_id> --lines <num_lines>
+llm -f tmux:1,2:20 "Summarize the following terminal output:"
 ```
-- `--pane-id` (optional): Specify the tmux pane id (default: current pane)
-- `--lines` (optional): Number of lines from the bottom of the pane to capture (default: all)
+- The first field (before the colon) is a comma-separated list of tmux pane ids (e.g., `1,2`). Omit for the current pane.
+- The second field (after the colon) is the number of lines from the bottom of the pane(s) to capture (e.g., `20`). Omit for all lines.
+- Examples:
+  - `tmux:1,2:20` — panes 1 and 2, last 20 lines
+  - `tmux:1` — pane 1, all lines
+  - `tmux::20` — current pane, last 20 lines
+  - `tmux:` — current pane, all lines (default)
 
-Example:
-```bash
-llm fragments_tmux --pane-id %1 --lines 20
-```
-
-### 2. List available tmux panes
-
-List all tmux panes with their IDs and titles for selection:
-
-```bash
-llm list_tmux_panes
-```
-
-This will print a list of all panes, e.g.:
-```
-session:0.0 %1 zsh
-session:0.1 %2 vim
-```
+You can also use the fragment in other LLM commands that support `-f`/`--fragment`.
 
 ## Development
 
