@@ -1,15 +1,21 @@
 import llm
 import subprocess
 from typing import List
+from dataclasses import dataclass
+
+@dataclass
+class Args:
+    pane: str | None = None
+    lines: int | None = None
 
 
 def parse_tmux_fragment_argument(
     argument_string: str,
-) -> list[dict[str, str | int | None]]:
+) -> list[Args]:
     if not argument_string.strip():
-        return [{"pane": None, "lines": None}]
+        return [Args()]
 
-    params = []
+    args = []
 
     # Split the argument string by commas
     argument_parts = argument_string.split(",")
@@ -18,14 +24,14 @@ def parse_tmux_fragment_argument(
         pane_part, sep, line_value = part.partition(":")
         line_part = line_value if sep else None
 
-        params.append(
-            {
-                "pane": pane_part if pane_part else None,
-                "lines": int(line_part) if line_part else None,
-            }
+        args.append(
+            Args(
+                pane=pane_part if pane_part else None,
+                lines=int(line_part) if line_part else None,
+            )
         )
 
-    return params
+    return args
 
 
 @llm.hookimpl
@@ -36,26 +42,24 @@ def register_fragment_loaders(register):
 
 def tmux_loader_function(argument: str) -> List[llm.Fragment]:
     try:
-        params = parse_tmux_fragment_argument(argument)
+        args = parse_tmux_fragment_argument(argument)
     except ValueError as e:
         raise ValueError(f"Invalid tmux fragment argument '{argument}': {e}") from e
 
     fragments = []
-    for param in params:
-        pane_id = param["pane"]
-        lines = param["lines"]
+    for arg in args:
         cmd = ["tmux", "capture-pane", "-p"]
 
-        if pane_id:
-            cmd += ["-t", f"{pane_id}"]
+        if arg.pane:
+            cmd += ["-t", f"{arg.pane}"]
 
         content = subprocess.check_output(
             cmd, text=True, stderr=subprocess.PIPE
         ).rstrip()
 
-        if lines:
-            content = "\n".join(content.splitlines()[-lines:])
+        if arg.lines:
+            content = "\n".join(content.splitlines()[-arg.lines:])
 
-        fragments.append(llm.Fragment(content, source=f"tmux:{pane_id=}:{lines=}"))
+        fragments.append(llm.Fragment(content, source=f"tmux:{arg.pane}:{arg.lines}"))
 
     return fragments

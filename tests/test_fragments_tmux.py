@@ -1,5 +1,5 @@
 import pytest
-from llm_fragments_tmux import parse_tmux_fragment_argument
+from llm_fragments_tmux import parse_tmux_fragment_argument, Args
 import subprocess
 import time
 from collections import namedtuple
@@ -52,25 +52,25 @@ ParseTmuxFragmentTest = namedtuple(
 @pytest.mark.parametrize(
     ParseTmuxFragmentTest._fields,
     [
-        ParseTmuxFragmentTest("", [{"pane": None, "lines": None}]),
+        ParseTmuxFragmentTest("", [Args()]),
         ParseTmuxFragmentTest(
             "1,2:20,hoge:20,5",
             [
-                {"pane": "1", "lines": None},
-                {"pane": "2", "lines": 20},
-                {"pane": "hoge", "lines": 20},
-                {"pane": "5", "lines": None},
+                Args(pane="1", lines=None),
+                Args(pane="2", lines=20),
+                Args(pane="hoge", lines=20),
+                Args(pane="5", lines=None),
             ],
         ),
-        ParseTmuxFragmentTest("1:20", [{"pane": "1", "lines": 20}]),
+        ParseTmuxFragmentTest("1:20", [Args(pane="1", lines=20)]),
         ParseTmuxFragmentTest(
-            "1,2:", [{"pane": "1", "lines": None}, {"pane": "2", "lines": None}]
+            "1,2:", [Args(pane="1", lines=None), Args(pane="2", lines=None)]
         ),
-        ParseTmuxFragmentTest(":20", [{"pane": None, "lines": 20}]),
+        ParseTmuxFragmentTest(":20", [Args(pane=None, lines=20)]),
         ParseTmuxFragmentTest(
-            "1,2", [{"pane": "1", "lines": None}, {"pane": "2", "lines": None}]
+            "1,2", [Args(pane="1", lines=None), Args(pane="2", lines=None)]
         ),
-        ParseTmuxFragmentTest("20", [{"pane": "20", "lines": None}]),
+        ParseTmuxFragmentTest("20", [Args(pane="20", lines=None)]),
     ],
 )
 def test_parse_tmux_fragment_argument_valid(argument, expected):
