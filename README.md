@@ -18,19 +18,19 @@ llm install llm-fragments-tmux
 
 Here's a step-by-step example of how you might use this plugin in practice:
 
-1. **Open tmux**
-  ```bash
-   tmux
-   ```
-2. **Run a command in your tmux pane**
-   ```bash
-   echo "Hello, world! This is a test."
-   ```
-3. **Use LLM with the tmux fragment to explain what happened**
-   ```bash
-   llm -f tmux: "Explain what happened in this terminal session."
-   ```
-   This will capture the output from your current tmux pane and send it to LLM for explanation.
+1. Open tmux
+```bash
+tmux
+```
+2. Run a command in your tmux pane
+```bash
+echo "Hello, world! This is a test."
+```
+3. Use LLM with the tmux fragment to explain what happened
+```bash
+llm -f tmux: "Explain what happened in this terminal session."
+```
+This will capture the output from your current tmux pane and send it to LLM for explanation.
 
 
 ## Usage
