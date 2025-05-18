@@ -1,7 +1,7 @@
 [project]
 name = "llm-fragments-tmux"
-version = "0.1"
-description = "llm plugins for loading tmux info"
+version = "0.1.0a0"
+description = "llm plugins for loading tmux panes"
 readme = "README.md"
 authors = [{name = "kj-9"}]
 license = "Apache-2.0"
