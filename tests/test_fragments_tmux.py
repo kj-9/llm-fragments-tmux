@@ -85,7 +85,7 @@ def test_tmux_fragment_parametrized(tmux_session_factory, cmds, fragment_arg, ex
     session_name = tmux_session_factory(cmds)
     time.sleep(0.5)
     result = subprocess.run([
-        "venv/bin/llm", "fragments", "show", f"tmux:{session_name}:{fragment_arg}"
+        "llm", "fragments", "show", f"tmux:{session_name}:{fragment_arg}"
     ], capture_output=True, text=True)
 
     assert result.returncode == 0
