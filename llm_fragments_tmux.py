@@ -3,6 +3,7 @@ import subprocess
 from typing import List
 from dataclasses import dataclass
 
+
 @dataclass
 class Args:
     pane: str | None = None
@@ -58,11 +59,13 @@ def tmux_loader_function(argument: str) -> List[llm.Fragment]:
         ).rstrip()
 
         if arg.lines:
-            content = "\n".join(content.splitlines()[-arg.lines:])
+            content = "\n".join(content.splitlines()[-arg.lines :])
 
         # wrap the content in a tag
         content = f"<tmux pane={arg.pane or 'current_pane'} lines={arg.lines or 'all'}>\n{content}\n</tmux>"
 
-        fragments.append(llm.Fragment(content, source=f"tmux:{arg.pane or ''}:{arg.lines or ''}"))
+        fragments.append(
+            llm.Fragment(content, source=f"tmux:{arg.pane or ''}:{arg.lines or ''}")
+        )
 
     return fragments
