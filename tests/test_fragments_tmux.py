@@ -103,18 +103,32 @@ TmuxFragmentParamTest = namedtuple(
         TmuxFragmentParamTest(
             ["echo hello world from tmux"],
             "",
-            ["echo hello world from tmux", "hello world from tmux"],
+            [
+                "<tmux pane=test_session_cmds0--expected_lines0 lines=all>",
+                "echo hello world from tmux",
+                "hello world from tmux",
+                "</tmux>",
+            ],
         ),
         TmuxFragmentParamTest(
-            ["echo line1", "echo line2", "echo line3"], "2", ["echo line3", "line3"]
+            ["echo line1", "echo line2", "echo line3"],
+            "2",
+            [
+                "<tmux pane=test_session_cmds1-2-expected_lines1 lines=2>",
+                "echo line3",
+                "line3",
+                "</tmux>",
+            ],
         ),
         TmuxFragmentParamTest(
             ["echo lineA", "echo lineB", "echo lineC", "echo lineD"],
             "3",
             [
+                "<tmux pane=test_session_cmds2-3-expected_lines2 lines=3>",
                 "lineC",
                 "echo lineD",
                 "lineD",
+                "</tmux>",
             ],
         ),
     ],
