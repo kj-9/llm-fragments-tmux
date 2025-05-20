@@ -42,6 +42,16 @@ def register_fragment_loaders(register):
 
 
 def tmux_loader_function(argument: str) -> List[llm.Fragment]:
+    """Load tmux fragments from the given argument string.
+
+    Syntax is tmux:<pane_id>:<lines> where <pane_id> is the tmux pane ID.
+
+    Example:
+        tmux:1:20,2:10 load tmux pane 1 and 2 with 20 and 10 lines respectively
+        tmux:1,2 load tmux pane 1 and 2 with all lines
+        tmux: load the current pane with all lines
+
+    """
     try:
         args = parse_tmux_fragment_argument(argument)
     except ValueError as e:
